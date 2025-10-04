@@ -9,3 +9,5 @@ assets/profile_pics/
 
 # OS specific
 .DS_Store
+# Add this line if it's not there
+.env
