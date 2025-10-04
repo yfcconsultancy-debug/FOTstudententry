@@ -5,36 +5,34 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 import hashlib
 import io
-import uuid # For generating unique IDs
-from datetime import datetime # MOVED: Import moved to the top
+import uuid 
+from datetime import datetime
+import requests # <-- ADDED for fetching the uploaded image
+from vercel_blob import put # <-- ADDED for uploading to Vercel Blob
 
 app = Flask(__name__, template_folder='.')
 
 # --- CONFIGURATION ---
 DATA_FILE = os.path.join('data', 'students.xlsx')
 ASSETS_DIR = 'assets'
-PROFILE_PICS_DIR = os.path.join(ASSETS_DIR, 'profile_pics') # Where uploaded images will be stored
 FONTS_DIR = os.path.join(ASSETS_DIR, 'fonts')
 TEMPLATE_FILE = os.path.join(ASSETS_DIR, 'ticket_template.png')
-SECRET_KEY = "YourSuperSecretKeyHere123!" # IMPORTANT: Keep this secret and change for production
+# Note: PROFILE_PICS_DIR is no longer needed as we upload to the cloud
+# SECRET_KEY will be set as an Environment Variable in Vercel
 
 # --- HELPER FUNCTIONS ---
-
 def generate_unique_student_id():
     """Generates a truly unique, encrypted-like StudentID."""
-    # Using uuid4 for uniqueness, then hashing it to make it look "encrypted" and fixed length
-    unique_string = str(uuid.uuid4()) + SECRET_KEY + str(datetime.now())
+    secret_key = os.environ.get('SECRET_KEY', 'default_local_secret_key')
+    unique_string = str(uuid.uuid4()) + secret_key + str(datetime.now())
     hashed_id = hashlib.sha256(unique_string.encode('utf-8')).hexdigest()
-    return f"STU-{hashed_id[:8].upper()}" # e.g., STU-A1B2C3D4
+    return f"STU-{hashed_id[:8].upper()}"
 
 # --- ROUTES ---
-
-# Route to serve the main homepage (index.html)
 @app.route('/', methods=['GET'])
 def serve_homepage():
     return render_template('index.html')
 
-# API Endpoint to register a new student and generate their ticket
 @app.route('/api/register-student', methods=['POST'])
 def register_student_and_generate_ticket():
     try:
@@ -45,56 +43,49 @@ def register_student_and_generate_ticket():
         profile_image_file = request.files.get('profileImage')
 
         if not all([student_name, roll_no, study_year, profile_image_file]):
-            return jsonify({"error": "Missing form data (Name, Roll No, Year, or Profile Image)."}), 400
+            return jsonify({"error": "Missing form data."}), 400
 
-        # 2. Generate Unique StudentID (this will be the QR code content)
+        # 2. Generate Unique StudentID
         generated_student_id = generate_unique_student_id()
         
-        # 3. Save Profile Image
-        profile_pic_filename = f"{generated_student_id}_{profile_image_file.filename}"
-        profile_pic_path = os.path.join(PROFILE_PICS_DIR, profile_pic_filename)
-        os.makedirs(PROFILE_PICS_DIR, exist_ok=True) # Ensure directory exists
-        profile_image_file.save(profile_pic_path)
+        # 3. CHANGED: Upload Profile Image to Vercel Blob
+        filename = f"profile_pics/{generated_student_id}_{profile_image_file.filename}"
+        body = profile_image_file.read()
+        
+        blob_result = put(pathname=filename, body=body, options={'access': 'public'})
+        profile_pic_url = blob_result['url'] # Get the public URL of the uploaded image
 
-        # 4. Load/Update students.xlsx
+        # 4. Load/Update students.xlsx (This part will still fail on Vercel for now)
         try:
             df = pd.read_excel(DATA_FILE)
         except FileNotFoundError:
-            # Create new dataframe if file doesn't exist
             df = pd.DataFrame(columns=['RollNo', 'StudentID', 'Name', 'Status', 'Year', 'ProfilePic'])
 
-        # Check if RollNo already exists (to prevent duplicates)
         if roll_no in df['RollNo'].astype(str).values:
-            return jsonify({"error": f"Roll Number '{roll_no}' already exists. Please use a unique Roll Number."}), 409 # 409 Conflict
+            return jsonify({"error": f"Roll Number '{roll_no}' already exists."}), 409
 
         new_student_data = {
             'RollNo': roll_no,
-            'StudentID': generated_student_id, # This is the generated, encrypted-like ID
+            'StudentID': generated_student_id,
             'Name': student_name,
-            'Status': 'Active', # Default status for new students
+            'Status': 'Active',
             'Year': study_year,
-            'ProfilePic': profile_pic_filename
+            'ProfilePic': profile_pic_url # CHANGED: Save the URL instead of the filename
         }
         df = pd.concat([df, pd.DataFrame([new_student_data])], ignore_index=True)
-        
-        # Ensure 'StudentID' column is string type for QR generation consistency
-        df['StudentID'] = df['StudentID'].astype(str)
-        df['RollNo'] = df['RollNo'].astype(str) # Also ensure RollNo is string
-        
-        df.to_excel(DATA_FILE, index=False) # Save changes
+        df.to_excel(DATA_FILE, index=False)
 
-        # 5. Generate the Ticket (using the logic from previous steps)
+        # 5. Generate the Ticket
         template = Image.open(TEMPLATE_FILE).convert("RGBA")
         font_name = ImageFont.truetype(os.path.join(FONTS_DIR, 'Poppins-Bold.ttf'), 48)
         font_details = ImageFont.truetype(os.path.join(FONTS_DIR, 'Poppins-Regular.ttf'), 32)
         
-        # Profile pic for the ticket will be the one just uploaded
-        profile_pic_ticket = Image.open(profile_pic_path).resize((180, 180))
+        # CHANGED: Fetch the profile pic from the Vercel Blob URL
+        response = requests.get(profile_pic_url)
+        profile_pic_ticket = Image.open(io.BytesIO(response.content)).resize((180, 180))
 
-        qr_img = qrcode.make(generated_student_id) # QR code contains the generated StudentID
-        qr_img = qr_img.resize((180, 180))
-
-        unique_ticket_code_on_ticket = generated_student_id # The StudentID IS the unique code
+        qr_img = qrcode.make(generated_student_id).resize((180, 180))
+        unique_ticket_code_on_ticket = generated_student_id
 
         card_layer = Image.new('RGBA', template.size, (255, 255, 255, 0))
         draw = ImageDraw.Draw(card_layer)
@@ -103,7 +94,6 @@ def register_student_and_generate_ticket():
         card_height = 300 
         card_center_x = template.width // 2
         card_center_y = template.height // 2
-
         card_left = card_center_x - card_width // 2
         card_top = card_center_y - card_height // 2
         
@@ -117,7 +107,6 @@ def register_student_and_generate_ticket():
         text_start_x = profile_pic_on_card_x + profile_pic_ticket.width + 30
         
         draw.text((text_start_x, profile_pic_on_card_y + 10), student_name, font=font_name, fill='white')
-        # FIXED! Changed student_year to study_year
         draw.text((text_start_x, profile_pic_on_card_y + 70), study_year, font=font_details, fill='#cccccc')
         draw.text((text_start_x, profile_pic_on_card_y + 110), f"ID: {unique_ticket_code_on_ticket}", font=font_details, fill='#cccccc')
 
@@ -135,14 +124,9 @@ def register_student_and_generate_ticket():
         )
 
     except Exception as e:
-        app.logger.error(f"Error during student registration and ticket generation: {e}")
-        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+        app.logger.error(f"Error: {e}")
+        return jsonify({"error": f"An unexpected server error occurred: {str(e)}"}), 500
 
 # This is the main entry point for Vercel
 def handler(environ, start_response):
     return app(environ, start_response)
-
-if __name__ == '__main__':
-    # This block is not used by Vercel, but is good for local testing
-    # To run locally, use the command: flask --app index.py run
-    pass
