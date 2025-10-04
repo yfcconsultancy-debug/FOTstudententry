@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Department Gatherings - Register & Generate Ticket</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .container { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 500px; }
+        h1 { color: #333; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+        .form-group input[type="text"], 
+        .form-group input[type="file"],
+        .form-group select { 
+            width: calc(100% - 22px); /* Adjust for padding and border */
+            padding: 12px; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            box-sizing: border-box;
+        }
+        .form-group input[type="file"] { padding: 10px; }
+        button { 
+            font-size: 18px; 
+            padding: 12px 25px; 
+            margin-top: 20px; 
+            border-radius: 8px; 
+            border: none; 
+            background-color: #007bff; 
+            color: white; 
+            cursor: pointer; 
+            width: 100%; 
+        }
+        button:hover { background-color: #0056b3; }
+        .message { margin-top: 20px; font-size: 16px; font-weight: bold; }
+        .message.success { color: green; }
+        .message.error { color: red; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Department Gatherings - Student Registration</h1>
+        <form id="registrationForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="studentName">Student Name:</label>
+                <input type="text" id="studentName" name="studentName" required>
+            </div>
+            <div class="form-group">
+                <label for="rollNo">Roll No./Any College ID:</label>
+                <input type="text" id="rollNo" name="rollNo" required>
+            </div>
+            <div class="form-group">
+                <label for="studyYear">Year of Study:</label>
+                <select id="studyYear" name="studyYear" required>
+                    <option value="">-- Select Year --</option>
+                    <option value="1st">1st Year</option>
+                    <option value="2nd">2nd Year</option>
+                    <option value="3rd">3rd Year</option>
+                    <option value="4th">4th Year</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="profileImage">Profile Image:</label>
+                <input type="file" id="profileImage" name="profileImage" accept="image/png, image/jpeg" required>
+            </div>
+            <button type="submit">Register Student & Generate Ticket</button>
+        </form>
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        document.getElementById('registrationForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = 'Generating ticket... Please wait.';
+            messageDiv.className = 'message'; // Reset styling
+
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch('/api/register-student', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Unknown error occurred.');
+                }
+
+                // If successful, download the file
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                // Get filename from Content-Disposition header if available
+                const contentDisposition = response.headers.get('Content-Disposition');
+                const filenameMatch = contentDisposition && contentDisposition.match(/filename="([^"]+)"/);
+                const filename = filenameMatch ? filenameMatch[1] : 'student_ticket.png';
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+
+                messageDiv.textContent = 'Ticket generated and downloaded successfully!';
+                messageDiv.className = 'message success';
+                this.reset(); // Clear form
+
+            } catch (error) {
+                console.error('Error:', error);
+                messageDiv.textContent = `Error: ${error.message}`;
+                messageDiv.className = 'message error';
+            }
+        });
+    </script>
+</body>
+</html>

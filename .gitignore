@@ -1,0 +1,11 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Data files (keep data separate from code)
+data/
+assets/profile_pics/
+
+# OS specific
+.DS_Store
