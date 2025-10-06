@@ -3,117 +3,389 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Department Gatherings - Register & Generate Ticket</title>
+    <title>ROOBAROO - Freshers Party</title>
+    <!-- Google Fonts for a modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-        .container { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 500px; }
-        h1 { color: #333; margin-bottom: 30px; }
-        .form-group { margin-bottom: 20px; text-align: left; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
-        .form-group input[type="text"], 
-        .form-group input[type="file"],
-        .form-group select { 
-            width: calc(100% - 22px); /* Adjust for padding and border */
-            padding: 12px; 
-            border: 1px solid #ddd; 
-            border-radius: 8px; 
-            font-size: 16px; 
+        /* --- General Styling & Color Palette --- */
+        :root {
+            --primary-color: #9B59B6; /* A stylish purple */
+            --secondary-color: #F1C40F; /* A vibrant gold/yellow */
+            --dark-bg: #1A1A2E; /* Dark blue-ish background */
+            --light-text: #EAEAEA;
+            --dark-text: #333;
+            --approval-green: rgba(46, 204, 113, 0.4); /* Semi-transparent green for the stamp */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
+            scroll-behavior: smooth;
         }
-        .form-group input[type="file"] { padding: 10px; }
-        button { 
-            font-size: 18px; 
-            padding: 12px 25px; 
-            margin-top: 20px; 
-            border-radius: 8px; 
-            border: none; 
-            background-color: #007bff; 
-            color: white; 
-            cursor: pointer; 
-            width: 100%; 
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--light-text);
+            line-height: 1.6;
         }
-        button:hover { background-color: #0056b3; }
-        .message { margin-top: 20px; font-size: 16px; font-weight: bold; }
-        .message.success { color: green; }
-        .message.error { color: red; }
+
+        /* --- Header and Navigation --- */
+        header {
+            background: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 1rem 5%;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+            letter-spacing: 2px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+        }
+
+        nav ul li {
+            margin-left: 2rem;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: var(--light-text);
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        nav ul li a:hover {
+            color: var(--secondary-color);
+        }
+
+        /* --- Hero Section --- */
+        .hero {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            /* You can replace this background image URL with one of your own */
+            background: linear-gradient(rgba(26, 26, 46, 0.7), rgba(26, 26, 46, 0.9)), url('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=1974') no-repeat center center/cover;
+            padding: 0 2rem;
+        }
+
+        .hero-content h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 6rem;
+            margin-bottom: 0.5rem;
+            color: var(--secondary-color);
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .hero-content h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero-content p {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto 2rem auto;
+        }
+
+        .hero-content .date {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--primary-color);
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            border-radius: 5px;
+            margin-bottom: 2.5rem;
+        }
+
+        /* --- Call to Action Button --- */
+        .cta-button {
+            display: inline-block;
+            background-color: var(--secondary-color);
+            color: var(--dark-text);
+            padding: 1rem 2.5rem;
+            text-decoration: none;
+            font-weight: 700;
+            border-radius: 50px;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .cta-button:hover {
+            background-color: #ffd900;
+            transform: translateY(-3px);
+        }
+
+        /* --- Content Sections --- */
+        .content-section {
+            padding: 6rem 5%;
+            text-align: center;
+            position: relative; /* This allows absolute positioning inside */
+            overflow: hidden; /* Prevents stamp from spilling out */
+        }
+
+        .content-section:nth-child(even) {
+            background-color: #161625;
+        }
+
+        .content-section h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            color: var(--primary-color);
+            position: relative;
+            z-index: 2; /* Keep title above the stamp */
+        }
+
+        .content-section > p {
+            max-width: 800px;
+            margin: 0 auto 2rem auto;
+            font-size: 1.1rem;
+            position: relative;
+            z-index: 2; /* Keep paragraph text above the stamp */
+        }
+
+        /* --- NEW: Approval Stamp Style --- */
+        .approval-stamp {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            font-size: 8rem;
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--approval-green);
+            border: 7px solid var(--approval-green);
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            z-index: 1; /* Sits behind the text */
+            pointer-events: none; /* Allows clicking through the stamp */
+            text-transform: uppercase;
+            white-space: nowrap; /* Prevents text wrapping */
+        }
+
+
+        /* --- Details Section --- */
+        .details-container {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 3rem;
+        }
+
+        .detail-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2rem;
+            border-radius: 10px;
+            flex-basis: 300px;
+            border-left: 3px solid var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+
+        .detail-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .detail-card h3 {
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        /* --- Gallery Section --- */
+        .gallery-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+
+        .gallery-container img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 10px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .gallery-container img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        /* --- RSVP Form --- */
+        .rsvp-form {
+            max-width: 600px;
+            margin: 2rem auto 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .rsvp-form input, .rsvp-form select {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 5px;
+            border: 1px solid var(--primary-color);
+            background-color: #161625;
+            color: var(--light-text);
+            font-size: 1rem;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .rsvp-form input::placeholder, .rsvp-form select {
+            color: #aaa;
+        }
+
+        /* --- Footer --- */
+        footer {
+            background-color: #111;
+            color: #aaa;
+            text-align: center;
+            padding: 2rem 5%;
+        }
+
+        /* --- Responsive Design for Mobile --- */
+        @media (max-width: 768px) {
+            nav ul {
+                display: none; /* Hides menu on small screens. For a real site, you'd add a hamburger menu button. */
+            }
+
+            .hero-content h1 {
+                font-size: 3.5rem;
+            }
+
+            .hero-content h2 {
+                font-size: 1.8rem;
+            }
+            
+            .content-section h2 {
+                font-size: 2.5rem;
+            }
+
+            .approval-stamp {
+                font-size: 4rem; /* Make stamp smaller on mobile */
+                border-width: 4px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Department Gatherings - Student Registration</h1>
-        <form id="registrationForm" enctype="multipart/form-data">
-            <div class="form-group">
-                <label for="studentName">Student Name:</label>
-                <input type="text" id="studentName" name="studentName" required>
+
+    <!-- Header & Navigation -->
+    <header>
+        <nav>
+            <div class="logo">ROOBAROO</div>
+            <ul>
+                <li><a href="#about">About</a></li>
+                <li><a href="#details">Details</a></li>
+                <li><a href="#gallery">Gallery</a></li>
+                <li><a href="#rsvp">RSVP</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Hero Section - The first thing visitors see -->
+        <section class="hero">
+            <div class="hero-content">
+                <h1>ROOBAROO</h1>
+                <h2>The Official Freshers Welcome Party</h2>
+                <p>Get ready for a night of music, dance, and unforgettable memories!</p>
+                <p class="date">Saturday, 25th October 2025 | 7 PM Onwards</p>
+                <a href="#rsvp" class="cta-button">RSVP Now</a>
             </div>
-            <div class="form-group">
-                <label for="rollNo">Roll No./Any College ID:</label>
-                <input type="text" id="rollNo" name="rollNo" required>
+        </section>
+
+        <!-- About the Event Section -->
+        <section id="about" class="content-section">
+            <!-- The "APPROVED" stamp is added here -->
+            <div class="approval-stamp">APPROVED</div>
+            <h2>Welcome, Freshers!</h2>
+            <p>Get ready to be introduced to the night of your life at ROOBAROO! It's more than just a party; it's the beginning of your new journey. We're rolling out the red carpet to welcome you with electrifying music, dazzling lights, and non-stop fun. Meet your seniors, make new friends, and create memories that will last a lifetime. Don't miss out on the biggest welcoming bash of the year!</p>
+        </section>
+
+        <!-- Event Details Section -->
+        <section id="details" class="content-section">
+            <h2>Event Details</h2>
+            <div class="details-container">
+                <div class="detail-card">
+                    <h3>Venue</h3>
+                    <p>The Grand Ballroom, University Campus, Dehradun</p>
+                </div>
+                <div class="detail-card">
+                    <h3>Date & Time</h3>
+                    <p>Saturday, 25th October 2025</p>
+                    <p>7:00 PM - Midnight</p>
+                </div>
+                <div class="detail-card">
+                    <h3>Dress Code</h3>
+                    <p>Smart Casuals - Dress to Impress!</p>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="studyYear">Year of Study:</label>
-                <select id="studyYear" name="studyYear" required>
-                    <option value="">-- Select Year --</option>
-                    <option value="1st">1st Year</option>
-                    <option value="2nd">2nd Year</option>
-                    <option value="3rd">3rd Year</option>
-                    <option value="4th">4th Year</option>
+        </section>
+        
+        <!-- Photo Gallery Section -->
+        <section id="gallery" class="content-section">
+            <h2>Glimpses From Last Year</h2>
+            <div class="gallery-container">
+                <!-- Replace these placeholder URLs with your actual image links -->
+                <img src="https://images.unsplash.com/photo-1527529482837-4698179dc6ce?auto=format&fit=crop&q=80&w=2070" alt="Party Photo 1">
+                <img src="https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&q=80&w=1888" alt="Party Photo 2">
+                <img src="https://images.unsplash.com/photo-1519758965932-494b15c7a356?auto=format&fit=crop&q=80&w=1887" alt="Party Photo 3">
+            </div>
+        </section>
+
+        <!-- RSVP Section -->
+        <section id="rsvp" class="content-section">
+            <h2>Are You Coming?</h2>
+            <p>Let us know you're joining the fun. Fill out the form below!</p>
+            <form class="rsvp-form" action="#">
+                <input type="text" name="name" placeholder="Your Full Name" required>
+                <input type="email" name="email" placeholder="Your Email Address" required>
+                <select name="attending" required>
+                    <option value="" disabled selected>Will you be attending?</option>
+                    <option value="yes">Yes, I'll be there!</option>
+                    <option value="no">Sorry, can't make it.</option>
                 </select>
-            </div>
-            <div class="form-group">
-                <label for="profileImage">Profile Image:</label>
-                <input type="file" id="profileImage" name="profileImage" accept="image/png, image/jpeg" required>
-            </div>
-            <button type="submit">Register Student & Generate Ticket</button>
-        </form>
-        <div id="message" class="message"></div>
-    </div>
+                <button type="submit" class="cta-button">Submit RSVP</button>
+            </form>
+        </section>
+    </main>
 
-    <script>
-        document.getElementById('registrationForm').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = 'Generating ticket... Please wait.';
-            messageDiv.className = 'message'; // Reset styling
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 ROOBAROO Freshers Party. All Rights Reserved.</p>
+        <p>Follow us for updates!</p>
+        <!-- Add your social media links here -->
+    </footer>
 
-            const formData = new FormData(this);
-
-            try {
-                const response = await fetch('/api/register-student', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Unknown error occurred.');
-                }
-
-                // If successful, download the file
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                // Get filename from Content-Disposition header if available
-                const contentDisposition = response.headers.get('Content-Disposition');
-                const filenameMatch = contentDisposition && contentDisposition.match(/filename="([^"]+)"/);
-                const filename = filenameMatch ? filenameMatch[1] : 'student_ticket.png';
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-
-                messageDiv.textContent = 'Ticket generated and downloaded successfully!';
-                messageDiv.className = 'message success';
-                this.reset(); // Clear form
-
-            } catch (error) {
-                console.error('Error:', error);
-                messageDiv.textContent = `Error: ${error.message}`;
-                messageDiv.className = 'message error';
-            }
-        });
-    </script>
 </body>
 </html>
+
